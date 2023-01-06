@@ -33,7 +33,7 @@ services:
     container_name: nginx-proxy
     restart: always
     volumes:
-      - /cloud-1/nginx.conf:/etc/nginx/conf.d
+      - /cloud-1/nginx/:/etc/nginx/conf.d
       - /srv/docker/wordpress/html/:/var/www/html
       - /srv/docker/certbot:/etc/letsencrypt
     ports:
@@ -45,8 +45,8 @@ services:
     container_name: certbot
     volumes:
       - /srv/docker/certbot:/etc/letsencrypt
-      - /srv/docker/wordpress/html/:/var/www/html
-    command: certonly --webroot --webroot-path=/var/www/html --email bclerc@student.42.fr --agree-tos --no-eff-email --force-renewal -d diskov.fr -d www.diskov.fr
+      - /srv/docker/wordpress/html/:/var/www/html/
+    command: certonly --test-cert --webroot --webroot-path=/var/www/html --email bclerc@student.42.fr --agree-tos --no-eff-email --force-renewal -d diskov.fr -d www.diskov.fr
 
   wordpress-pma:
     image: phpmyadmin/phpmyadmin

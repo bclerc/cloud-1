@@ -2,52 +2,57 @@
   become: true
 
   tasks:
-    - name: Install aptitude
-      apt:
-        name: aptitude
-        state: latest
-        update_cache: true
+    # - name: Install aptitude
+    #   apt:
+    #     name: aptitude
+    #     state: latest
+    #     update_cache: true
     
-    - name: Install required system package
-      apt:
-        pkg:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - software-properties-common
-          - python3-pip
-          - virtualenv
-          - python3-setuptools
-        state: latest
-        update_cache: true
+    # - name: Install required system package
+    #   apt:
+    #     pkg:
+    #       - apt-transport-https
+    #       - ca-certificates
+    #       - curl
+    #       - software-properties-common
+    #       - python3-pip
+    #       - virtualenv
+    #       - python3-setuptools
+    #     state: latest
+    #     update_cache: true
     
-    - name: Add Docker GPG apt Key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
+    # - name: Add Docker GPG apt Key
+    #   apt_key:
+    #     url: https://download.docker.com/linux/ubuntu/gpg
+    #     state: present
     
-    - name: Add docker repo
-      apt_repository:
-        repo: deb https://download.docker.com/linux/ubuntu focal stable
-        state: present
+    # - name: Add docker repo
+    #   apt_repository:
+    #     repo: deb https://download.docker.com/linux/ubuntu focal stable
+    #     state: present
     
-    - name: Update apt and install docker-ce
-      apt:
-        name: docker-ce
-        state: latest
-        update-cache: true
+    # - name: Update apt and install docker-ce
+    #   apt:
+    #     name: docker-ce
+    #     state: latest
+    #     update-cache: true
     
-    - name: Install docker module for python
-      pip:
-        name: docker
+    # - name: Install docker module for python
+    #   pip:
+    #     name: docker
 
-    - name: Install docker-compose module for python
-      pip:
-        name: docker-compose
+    # - name: Install docker-compose module for python
+    #   pip:
+    #     name: docker-compose
     
     - name: Ensure /cloud-1/ directory exist
       file:
         path: "/cloud-1/"
+        state: directory
+
+    - name: Ensure nginx directory exist
+      file:
+        path: "/cloud-1/nginx/"
         state: directory
 
     - name: Copy Docker-compose File
@@ -55,11 +60,16 @@
         src: srcs/docker-compose.yml
         dest: /cloud-1/docker-compose.yml
 
+    - name: Copy nginx File
+      copy:
+        src: srcs/nginx.conf
+        dest: /cloud-1/nginx/nginx.conf
+
     - name: Ensure service is enabled
       command: service docker restart
     
-    - name: Deploy docker-compsoe
-      community.docker.docker_compose:
-        project_src: /cloud-1/
-        files:
-          - docker-compose.yml
+   # - name: Deploy docker-compsoe
+    #  community.docker.docker_compose:
+     #   project_src: /cloud-1/
+     #   files:
+       #   - docker-compose.yml
