@@ -1,43 +1,62 @@
 version: "3"
- 
+
 services:
-   wordpress-db:
-     container_name: wordpress-db
-     image: mysql:latest
-     volumes:
-       - /srv/docker/wordpress/db:/var/lib/mysql
-     restart: always
-     environment:
-       MYSQL_DATABASE: wordpress
-       MYSQL_USER: cloud1
-       MYSQL_PASSWORD: cloud1
-       MYSQL_RANDOM_ROOT_PASSWORD: 1
-   wordpress:
-     container_name: wordpress
-     depends_on:
-       - wordpress-db
-     image: wordpress:latest
-     ports:
-       - 80:80
-     restart: always
-     volumes:
-       - /srv/docker/wordpress/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
-       - /srv/docker/wordpress/html:/var/www/html
-     environment:
-       WORDPRESS_DB_HOST: wordpress-db:3306
-       WORDPRESS_DB_USER: cloud1
-       WORDPRESS_DB_PASSWORD: cloud1
-       WORDPRESS_DB_NAME: wordpress
-     
-   wordpress-pma:
+  wordpress-db:
+    container_name: wordpress-db
+    image: mysql:latest
+    volumes:
+      - /srv/docker/wordpress/db:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: cloud1
+      MYSQL_PASSWORD: cloud1
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+
+  wordpress:
+    container_name: wordpress
+    depends_on:
+      - wordpress-db
+    image: wordpress:6.1.1-fpm-alpine
+    restart: always
+    volumes:
+      - /srv/docker/wordpress/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - /srv/docker/wordpress/html:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_USER: cloud1
+      WORDPRESS_DB_PASSWORD: cloud1
+      WORDPRESS_DB_NAME: wordpress
+
+  nginx-proxy:
+    image: nginx:1.23.3-alpine
+    container_name: nginx-proxy
+    restart: always
+    volumes:
+      - /cloud-1/nginx.conf:/etc/nginx/conf.d
+      - /srv/docker/wordpress/html/:/var/www/html
+      - /srv/docker/certbot:/etc/letsencrypt
+    ports:
+      - "80:80"
+      - "443:443"
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - /srv/docker/certbot:/etc/letsencrypt
+      - /srv/docker/wordpress/html/:/var/www/html
+    command: certonly --webroot --webroot-path=/var/www/html --email bclerc@student.42.fr --agree-tos --no-eff-email --force-renewal -d diskov.fr -d www.diskov.fr
+
+  wordpress-pma:
     image: phpmyadmin/phpmyadmin
     container_name: wordpress-pma
     depends_on:
-        - wordpress-db
+      - wordpress-db
     environment:
-        - PMA_HOST=wordpress-db
-        - PMA_PORT=3306
-        - PMA_ARBITRARY=1
+      - PMA_HOST=wordpress-db
+      - PMA_PORT=3306
+      - PMA_ARBITRARY=1
     ports:
-        - 8000:80
+      - 8000:80
     restart: always
