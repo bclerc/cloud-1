@@ -1,0 +1,54 @@
+version: "3"
+
+services:
+  wordpress-db:
+    container_name: wordpress-db
+    image: mysql:latest
+    volumes:
+      - {{ base_dir }}/mysql:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: {{ mysql_database }}
+      MYSQL_USER: {{ mysql_user }}
+      MYSQL_PASSWORD: {{ mysql_password }}
+      MYSQL_RANDOM_ROOT_PASSWORD: {{ mysql_random_root_password }}
+
+  wordpress:
+    container_name: wordpress
+    depends_on:
+      - wordpress-db
+    image: wordpress:6.1.1-fpm-alpine
+    restart: always
+    volumes:
+      - {{ base_dir }}/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - {{ base_dir }}/html/:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_USER: {{ mysql_user }}
+      WORDPRESS_DB_PASSWORD: {{ mysql_password }}
+      WORDPRESS_DB_NAME: {{ mysql_database }}
+
+  nginx-proxy:
+    image: nginx:1.23.3-alpine
+    container_name: nginx-proxy
+    restart: always
+    volumes:
+      - {{ base_dir }}/nginx/:/etc/nginx/conf.d
+      - {{ base_dir }}/html/:/var/www/html
+      - {{ base_dir }}/certbot:/etc/letsencrypt
+    ports:
+      - "80:80"
+      - "443:443"
+
+  wordpress-pma:
+    image: phpmyadmin/phpmyadmin
+    container_name: wordpress-pma
+    depends_on:
+      - wordpress-db
+    environment:
+      - PMA_HOST=wordpress-db
+      - PMA_PORT=3306
+      - PMA_ARBITRARY=1
+    ports:
+      - 8000:80
+    restart: always

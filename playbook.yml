@@ -1,4 +1,10 @@
 - hosts: cloud-1
+  vars:
+    - base_dir: /cloud-1/
+    - mysql_database: wordpress
+    - mysql_user: cloud1
+    - mysql_password: cloud1
+    - mysql_random_root_password: 1
   become: true
 
   tasks:
@@ -44,32 +50,55 @@
     # - name: Install docker-compose module for python
     #   pip:
     #     name: docker-compose
-    
-    - name: Ensure /cloud-1/ directory exist
-      file:
-        path: "/cloud-1/"
-        state: directory
 
-    - name: Ensure nginx directory exist
-      file:
-        path: "/cloud-1/nginx/"
-        state: directory
+    # - name: Create directories
+    #   file:
+    #     path: "{{ base_dir }}/{{ item }}"
+    #     state: directory
+    #   with_items:
+    #     - nginx
+    #     - wordpress
+    #     - mysql
+    #     - certbot
+    #     - html
 
-    - name: Copy Docker-compose File
-      copy:
-        src: srcs/docker-compose.yml
+    - name: Template docker-compose.yml
+      template:
+        src: srcs/docker-compose.j2
         dest: /cloud-1/docker-compose.yml
 
-    - name: Copy nginx File
-      copy:
-        src: srcs/nginx.conf
+    - name: Prepare nginx.conf for ssl certificate
+      template:
+        src: srcs/nginx.j2
         dest: /cloud-1/nginx/nginx.conf
 
     - name: Ensure service is enabled
       command: service docker restart
     
-   # - name: Deploy docker-compsoe
-    #  community.docker.docker_compose:
-     #   project_src: /cloud-1/
-     #   files:
-       #   - docker-compose.yml
+    - name: Run nginx container
+      command: docker-compose -f {{ base_dir }}/docker-compose.yml up -d nginx-proxy
+
+    - name: Requesting ssl certificate
+      command: docker run -it --rm --name certbot -v {{ base_dir }}/certbot:/etc/letsencrypt -v {{ base_dir }}/html:/var/www/html certbot/certbot certonly --test-cert --webroot --webroot-path=/var/www/html --email
+      register: certbot_output
+
+    - name: Print certbot output
+      debug:
+        msg: "{{ certbot_output.stdout_lines }}"
+
+    - name: Waiting 8s for certificate
+      ansible.builtin.wait_for:
+        timeout: 10
+
+    - name: Change nginx.conf to use ssl certificate
+      template:
+        src: srcs/nginx-ssl.j2
+        dest: /cloud-1/nginx/nginx.conf
+    
+    - name: Shutdown
+      command: docker-compose -f {{ base_dir }}/docker-compose.yml down
+
+    - name: Run docker-compose
+      ansible.builtin.docker_compose:
+        project_src: /cloud-1/
+        state: present

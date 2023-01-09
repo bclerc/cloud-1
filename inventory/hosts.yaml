@@ -1,3 +1,4 @@
 [cloud-1]
 #localhost:2222 ansible_connection=ssh ansible_ssh_user=sshuser
-57.128.80.184 ansible_connection=ssh ansible_ssh_user=ubuntu
+diskov.fr ansible_connection=ssh ansible_ssh_user=ubuntu domain=diskov.fr
+server-2.diskov.fr ansible_connection=ssh ansible_ssh_user=ubuntu domain=server-2.diskov.fr
