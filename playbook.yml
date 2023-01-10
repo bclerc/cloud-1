@@ -1,12 +1,5 @@
 - hosts: cloud-1
-  vars:
-    - base_dir: /cloud-1/
-    - mysql_database: wordpress
-    - mysql_user: cloud1
-    - mysql_password: cloud1
-    - mysql_random_root_password: 1
   become: true
-
   tasks:
     - name: Install aptitude
       apt:
@@ -64,12 +57,12 @@
     - name: Template docker-compose.yml
       template:
         src: srcs/docker-compose.j2
-        dest: /cloud-1/docker-compose.yml
+        dest: "{{ base_dir }}/docker-compose.yml"
 
     - name: Prepare nginx.conf for ssl certificate
       template:
         src: srcs/nginx.j2
-        dest: /cloud-1/nginx/nginx.conf
+        dest: "{{ base_dir }}/nginx/nginx.conf"
 
     - name: Ensure service is enabled
       command: service docker restart
@@ -78,7 +71,7 @@
       command: docker-compose -f {{ base_dir }}/docker-compose.yml up -d nginx-proxy
 
     - name: Requesting ssl certificate
-      command: docker run -it --rm -v {{ base_dir }}/certbot:/etc/letsencrypt -v {{ base_dir }}/html:/var/www/html certbot/certbot certonly --test-cert --webroot --webroot-path=/var/www/html --agree-tos --no-eff-email --email admin@{{ domain }} -d {{ domain }}
+      command: docker run -it --rm -v {{ base_dir }}/certbot:/etc/letsencrypt -v {{ base_dir }}/html:/var/www/html certbot/certbot certonly --webroot --webroot-path=/var/www/html --test-cert --agree-tos --no-eff-email --email admin@{{ domain }} -d {{ domain }}
       register: certbot_output
 
     - name: Print certbot output
@@ -88,7 +81,7 @@
     - name: Change nginx.conf to use ssl certificate
       template:
         src: srcs/nginx-ssl.j2
-        dest: /cloud-1/nginx/nginx.conf
+        dest: "{{ base_dir }}/nginx/nginx.conf"
     
     - name: Shutdown
       command: docker-compose -f {{ base_dir }}/docker-compose.yml down

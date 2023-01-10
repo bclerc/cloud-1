@@ -1,0 +1,7 @@
+{
+  "base_dir": "/cloud-1/",
+  "mysql_database": "",
+  "mysql_user": "",
+  "mysql_password": "",
+  "mysql_random_root_password": "1"
+}

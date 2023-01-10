@@ -49,6 +49,5 @@ services:
       - PMA_HOST=wordpress-db
       - PMA_PORT=3306
       - PMA_ARBITRARY=1
-    ports:
-      - 8000:80
+      - PMA_ABSOLUTE_URI=https://{{ domain }}/phpmyadmin
     restart: always
